@@ -1,0 +1,46 @@
+{
+  "name": "fems-backend",
+  "version": "1.0.0",
+  "description": "SafeGuard Fire Extinguisher Management System — RESTful microservices backend",
+  "type": "module",
+  "scripts": {
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+
+    "dev:gateway": "nodemon gateway/index.js",
+    "dev:auth": "nodemon services/auth/index.js",
+    "dev:extinguisher": "nodemon services/extinguisher/index.js",
+    "dev:inspection": "nodemon services/inspection/index.js",
+    "dev:reporting": "nodemon services/reporting/index.js",
+    "dev:notification": "nodemon services/notification/index.js",
+
+    "start:gateway": "node gateway/index.js",
+    "start:auth": "node services/auth/index.js",
+    "start:extinguisher": "node services/extinguisher/index.js",
+    "start:inspection": "node services/inspection/index.js",
+    "start:reporting": "node services/reporting/index.js",
+    "start:notification": "node services/notification/index.js",
+
+    "dev": "concurrently -n gateway,auth,ext,insp,report,notif -c white,green,cyan,magenta,yellow,blue \"npm:dev:gateway\" \"npm:dev:auth\" \"npm:dev:extinguisher\" \"npm:dev:inspection\" \"npm:dev:reporting\" \"npm:dev:notification\"",
+    "start": "concurrently -n gateway,auth,ext,insp,report,notif -c white,green,cyan,magenta,yellow,blue \"npm:start:gateway\" \"npm:start:auth\" \"npm:start:extinguisher\" \"npm:start:inspection\" \"npm:start:reporting\" \"npm:start:notification\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "http-proxy-middleware": "^3.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0",
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.4"
+  }
+}

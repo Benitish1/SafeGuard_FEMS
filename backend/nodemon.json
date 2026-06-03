@@ -1,0 +1,6 @@
+{
+  "watch": ["gateway", "services", "shared"],
+  "ext": "js,json,yaml",
+  "ignore": ["node_modules", "*.log", "scripts"],
+  "delay": 300
+}

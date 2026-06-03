@@ -1,0 +1,182 @@
+openapi: 3.0.3
+info:
+  title: SafeGuard — Fire Extinguisher Management System API
+  version: 1.0.0
+  description: >
+    RESTful microservices API for managing fire extinguishers, inspections,
+    maintenance, users, reporting and notifications. All routes are exposed
+    through the API gateway on port 4000 under the /api prefix.
+servers:
+  - url: http://localhost:4000/api
+    description: Local gateway
+tags:
+  - name: Auth & Users
+  - name: Fire Extinguishers
+  - name: Inspections & Maintenance
+  - name: Reports
+  - name: Notifications
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, example: admin@safeguard.com }
+        password: { type: string, example: Password123! }
+    Registration:
+      type: object
+      required: [firstName, lastName, email, password]
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string }
+        password: { type: string, minLength: 8 }
+    Extinguisher:
+      type: object
+      required: [serialNumber, location, type, size, installationDate, expiryDate]
+      properties:
+        serialNumber: { type: string, example: FE-010 }
+        location: { type: string, example: Building A - Lobby }
+        type: { type: string, enum: [Water, CO2, Foam, Dry Chemical] }
+        size: { type: string, enum: ['1.5 lb', '5 lb', '9 lb', '12 lb'] }
+        installationDate: { type: string, format: date }
+        expiryDate: { type: string, format: date }
+        status: { type: string, enum: [Active, Inactive, Expired, Needs Maintenance, Decommissioned] }
+    OtpBody:
+      type: object
+      required: [otp]
+      properties:
+        otp: { type: string, example: "123456" }
+security:
+  - bearerAuth: []
+paths:
+  /auth/register:
+    post:
+      tags: [Auth & Users]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Registration' } } }
+      responses: { '201': { description: Created }, '409': { description: Email exists } }
+  /auth/login:
+    post:
+      tags: [Auth & Users]
+      summary: Login and receive JWT tokens
+      security: []
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/Credentials' } } }
+      responses: { '200': { description: OK }, '401': { description: Invalid credentials } }
+  /auth/forgot-password:
+    post:
+      tags: [Auth & Users]
+      summary: Request a password-reset code by email
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties: { email: { type: string } }
+      responses: { '200': { description: Code sent if email exists } }
+  /auth/reset-password:
+    post:
+      tags: [Auth & Users]
+      summary: Reset password using the emailed code
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, otp, newPassword]
+              properties:
+                email: { type: string }
+                otp: { type: string }
+                newPassword: { type: string, minLength: 8 }
+      responses: { '200': { description: Password reset } }
+  /auth/otp/request:
+    post:
+      tags: [Auth & Users]
+      summary: Request an OTP (logout / delete_account / delete_extinguisher)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                purpose: { type: string, enum: [logout, delete_account, delete_extinguisher] }
+                reference: { type: string }
+      responses: { '200': { description: OTP sent } }
+  /auth/logout:
+    post:
+      tags: [Auth & Users]
+      summary: Logout (requires OTP)
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/OtpBody' } } }
+      responses: { '200': { description: Logged out } }
+  /auth/me:
+    get: { tags: [Auth & Users], summary: Get my profile, responses: { '200': { description: OK } } }
+    put: { tags: [Auth & Users], summary: Update my profile, responses: { '200': { description: OK } } }
+    delete:
+      tags: [Auth & Users]
+      summary: Delete my account (requires OTP)
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/OtpBody' } } }
+      responses: { '200': { description: Deleted } }
+  /auth/me/password:
+    put: { tags: [Auth & Users], summary: Change password, responses: { '200': { description: OK } } }
+  /auth/users:
+    get: { tags: [Auth & Users], summary: 'List users (admin only)', responses: { '200': { description: OK } } }
+  /extinguishers:
+    get:
+      tags: [Fire Extinguishers]
+      summary: 'List extinguishers (filters: status, type, q)'
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Fire Extinguishers]
+      summary: Register a new extinguisher (admin/inspector)
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/Extinguisher' } } }
+      responses: { '201': { description: Created } }
+  /extinguishers/{id}:
+    get: { tags: [Fire Extinguishers], summary: Get extinguisher by id, responses: { '200': { description: OK } } }
+    put: { tags: [Fire Extinguishers], summary: Update extinguisher, responses: { '200': { description: OK } } }
+    delete:
+      tags: [Fire Extinguishers]
+      summary: Delete extinguisher (requires OTP)
+      requestBody:
+        content: { application/json: { schema: { $ref: '#/components/schemas/OtpBody' } } }
+      responses: { '200': { description: Deleted } }
+  /inspections:
+    get: { tags: [Inspections & Maintenance], summary: List inspections, responses: { '200': { description: OK } } }
+    post: { tags: [Inspections & Maintenance], summary: Schedule an inspection, responses: { '201': { description: Created } } }
+  /inspections/{id}:
+    put: { tags: [Inspections & Maintenance], summary: Update/complete inspection, responses: { '200': { description: OK } } }
+    delete: { tags: [Inspections & Maintenance], summary: Cancel inspection, responses: { '200': { description: OK } } }
+  /maintenance:
+    get: { tags: [Inspections & Maintenance], summary: List maintenance logs, responses: { '200': { description: OK } } }
+    post: { tags: [Inspections & Maintenance], summary: Log maintenance activity, responses: { '201': { description: Created } } }
+  /reports/summary:
+    get: { tags: [Reports], summary: Real-time dashboard summary, responses: { '200': { description: OK } } }
+  /reports/inventory:
+    get: { tags: [Reports], summary: 'Inventory report (period: day/month/year)', responses: { '200': { description: OK } } }
+  /reports/inspections:
+    get: { tags: [Reports], summary: Inspection report, responses: { '200': { description: OK } } }
+  /reports/compliance:
+    get: { tags: [Reports], summary: Compliance report, responses: { '200': { description: OK } } }
+  /reports/maintenance:
+    get: { tags: [Reports], summary: Maintenance report, responses: { '200': { description: OK } } }
+  /reports/export/{dataset}.csv:
+    get: { tags: [Reports], summary: 'Export CSV (extinguishers|inspections|compliance|maintenance)', responses: { '200': { description: OK } } }
+  /reports/export/{dataset}.pdf:
+    get: { tags: [Reports], summary: Export printable PDF, responses: { '200': { description: OK } } }
+  /notifications:
+    get: { tags: [Notifications], summary: My notifications, responses: { '200': { description: OK } } }
