@@ -1,6 +1,6 @@
 // Thin fetch wrapper that injects the JWT and normalises errors.
 // Everything goes through "/api" which Vite/the gateway proxies to the services.
-const BASE = '/api';
+const BASE = import.meta.env.VITE_API_URL || '/api';
 
 // Read the stored access token (set at login).
 function getToken() {
